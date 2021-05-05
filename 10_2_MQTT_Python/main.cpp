@@ -2,6 +2,7 @@
 #include "MQTTNetwork.h"
 #include "MQTTmbed.h"
 #include "MQTTClient.h"
+#include "stm32l475e_iot01_accelero.h"
 
 // GLOBAL VARIABLES
 WiFiInterface *wifi;
@@ -10,7 +11,7 @@ InterruptIn btn2(USER_BUTTON);
 volatile int message_num = 0;
 volatile int arrivedcount = 0;
 volatile bool closed = false;
-
+//int16_t pDataXYZ[3] = {0};
 const char* topic = "Mbed";
 
 Thread mqtt_thread(osPriorityHigh);
@@ -32,6 +33,12 @@ void publish_message(MQTT::Client<MQTTNetwork, Countdown>* client) {
     message_num++;
     MQTT::Message message;
     char buff[100];
+    int16_t pDataXYZ[3] = {0};
+    while(1){
+        BSP_ACCELERO_AccGetXYZ(pDataXYZ);
+        printf("%d, %d, %d\n", pDataXYZ[0], pDataXYZ[1], pDataXYZ[2]);
+        ThisThread::sleep_for(500ms);
+    }
     sprintf(buff, "QoS0 Hello, Python! #%d", message_num);
     message.qos = MQTT::QOS0;
     message.retained = false;
@@ -85,6 +92,12 @@ int main() {
             return -1;
     }
     printf("Successfully connected!\r\n");
+    BSP_ACCELERO_Init();
+//    while(1){
+//        BSP_ACCELERO_AccGetXYZ(pDataXYZ);
+//        printf("%d, %d, %d\n", pDataXYZ[0], pDataXYZ[1], pDataXYZ[2]);
+ //       ThisThread::sleep_for(500ms);
+ //   }
 
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     data.MQTTVersion = 3;
